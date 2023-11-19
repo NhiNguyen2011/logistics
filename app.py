@@ -1,12 +1,13 @@
 import streamlit as st
 import subprocess
 import os
+import sys
 
 def run_script(input_text):
     with open("temp_input.txt","w") as temp_file:
         temp_file.write(input_text)
 
-    result = subprocess.run(["python", "country_matching.py","temp_input.txt"], capture_output=True, text=True)
+    result = subprocess.run([f"{sys.executable}", "country_matching.py","temp_input.txt"], capture_output=True, text=True)
 
     os.remove("temp_input.txt")
 
