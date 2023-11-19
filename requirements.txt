@@ -1,8 +1,5 @@
-sys
-pandas
-numpy
-os
-re
-openai
-streamlit
-subprocess
+numpy==1.26.2
+openai==0.28.0
+pandas==2.1.3
+python-dotenv==1.0.0
+streamlit==1.28.2
