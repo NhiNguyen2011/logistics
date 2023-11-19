@@ -1,0 +1,40 @@
+2 - AL
+3 - AND - CO - EC - PE
+2 - BA
+5 - CA
+2 - CAF - AG - BB - BS - BZ - DM - DO - GD - GY - JM - KN - LC - SR - TT - VC - ( HT ) 
+2 - CAM - CR - GT - HN - NI - PA - SV
+2 - CAS - CM
+1 - CH 
+2 - CI
+3 - CL
+3 - DZ
+3 - EG
+2 - ESA - KM - MG - MU - SC - ZW - ( ZM )
+2 - FO
+7 - GB
+2 - GE
+2 - GH
+3 - IL
+3 - JO
+6 - JP
+4 - KR
+3 - LB
+1 - EWR/EEA - LI - NO - IS
+3 - MA
+2 - MD
+2 - ME
+2 - MK
+3 - MX
+2 - PS
+3 - XS/RS
+3 - SADC - BW - LS - MZ - NA - SZ - ZA
+0 - SG
+3 - TN
+3 - UA
+0 - ÜLG/OCT - AW - BL - BQ - CW - GL - NC - PF - PM - SX - TF - WF
+0 - VN
+2 - WPS - FJ - PG - SB - WS
+2 - XC
+2 - XK
+2 - XL
