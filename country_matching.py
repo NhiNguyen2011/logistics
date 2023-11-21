@@ -117,7 +117,7 @@ def matching_countries(länder_dict, gruppe_dict, input_countries):
                 elif len(missing_member) != len(gruppe_dict[missing]):
                     text = f"Gruppe {missing} ist unvollständig, fehlende Länder: {missing_member}"
                     if member == "HT" or member == "ZM":
-                        text = text + " aber noch nicht anwendbar"
+                        text = text + f" aber {member} noch nicht anwendbar"
                     log.append(text)  
             
         if missing_countries:
