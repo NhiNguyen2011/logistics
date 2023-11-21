@@ -55,7 +55,7 @@ def process_input_text(input_file, gruppe_dict):
     if "Cariforum" in content:
         content = content.replace("Cariforum", "CAF")
         
-    input_countries = re.findall(r'\b[A-Z]+\b', content)
+    input_countries = re.findall(r'\b[A-Z]{2,4}\b', content)
 
     if input_countries: 
         for i in range(len(input_countries)):
