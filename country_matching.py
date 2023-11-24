@@ -64,10 +64,9 @@ def process_input_text(input_file, gruppe_dict):
     else: 
         text = content
         prompt = f"""
-        You will be given a text containing country names and some specific regional groupings or partnerships in various languages.
-        1 - Transform the country names into corresponding ISO 3166-1 alpha-2 country codes. 
-        2 - Transform specific regional groupings or partnerships which are not part of the standard ISO 3166-1 alpha-2 codes into corresponding abbreviations 
-            based on these following instructions:
+        Given a text containing country names and specific regional groupings or partnerships in various languages, 
+        transform the country names into corresponding ISO 3166-1 alpha-2 country codes and 
+        specific regional groupings or partnerships into corresponding abbreviations based on the following instructions:          
             - Overseas Countries and Territories: OCT
             - Eastern and Southern Africa: ESA
             - Cariforum: CAF
@@ -77,7 +76,7 @@ def process_input_text(input_file, gruppe_dict):
             - Central America: CAM
             - Central Africa: CAS
             - Andean countries: AND
-        3 - Provide them in a list format
+        Provide them in a list format
         
         ```{text}```
         """
