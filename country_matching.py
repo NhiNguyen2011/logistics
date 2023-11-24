@@ -52,15 +52,15 @@ def process_input_text(input_file, gruppe_dict):
     with open(input_file,'r', encoding="utf-8") as file:
         content = file.read()
         
-    if "Cariforum" in content:
-        content = content.replace("Cariforum", "CAF")
-        
-    input_countries = re.findall(r'\b[A-Z]{2,4}\b', content)
+    pattern = re.compile(r'\b([A-Z]{2,4})\b')
 
-    if input_countries: 
-        for i in range(len(input_countries)):
-            if input_countries[i].upper() == 'CARIFORUM':
-                input_countries[i] = 'CAF'
+    match = re.findall(pattern,content)
+
+    if len(match) >= 10: 
+        pattern1 = re.compile("Cariforum", re.IGNORECASE)
+        content = pattern1.sub("CAF", content)
+
+        input_countries = re.findall(pattern,content)
     else: 
         text = content
         prompt = f"""
