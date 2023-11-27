@@ -52,7 +52,7 @@ def process_input_text(input_file, gruppe_dict):
     with open(input_file,'r', encoding="utf-8") as file:
         content = file.read()
         
-    pattern = re.compile(r'\b([A-Z]{2,4})\b')
+    pattern = re.compile(r'\b([A-ZÜ]{2,4})\b')
 
     match = re.findall(pattern,content)
 
