@@ -80,7 +80,8 @@ def process_input_text(input_file, gruppe_dict):
         
         ```{text}```
         """
-        input_countries = get_completion(prompt)
+        result = get_completion(prompt)
+        input_countries = re.findall(pattern,result)
 
     for key, values in gruppe_dict.items():
         if (key in input_countries) and any(value in input_countries for value in values):
