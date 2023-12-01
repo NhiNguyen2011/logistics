@@ -13,12 +13,18 @@ def run_script(input_text):
 
     output = result.stdout.replace('\n', '<br>')
 
-    return output, result.stderr   
+    return output, result.stderr  
+
+def clear_text():
+    st.session_state["input"] = ""
+
 
 def main():
     st.title("Prüfung von Ländern")
 
-    user_input = st.text_area("Text hier eingeben:")
+    user_input = st.text_area("Text hier eingeben:", height=300, key="input")
+    
+    col1, col2 = st.columns([3, 1])
 
     if st.button("Länder prüfen"):
         output, error = run_script(user_input)
@@ -28,6 +34,10 @@ def main():
             st.markdown(output, unsafe_allow_html=True)
         if error:
             st.error(error)
+    
+
+    st.button("Texteingabe löschen", on_click=clear_text)    
+    
 
 if __name__ == "__main__":
     main()
