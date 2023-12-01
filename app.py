@@ -35,8 +35,8 @@ def main():
         if error:
             st.error(error)
     
-
-    st.button("Texteingabe löschen", on_click=clear_text)    
+    with col2:
+        st.button("Texteingabe löschen", on_click=clear_text)    
     
 
 if __name__ == "__main__":
