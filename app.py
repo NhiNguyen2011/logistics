@@ -35,6 +35,13 @@ def main():
         if error:
             st.error(error)
     
+    with col1:
+        selected_option = st.selectbox(
+            "Wählen Sie Ihren gewünschten Kunden.", 
+            ["Allgemein ohne Wirtschaftszonen", "Clariant Gruppe + Heubach", "Avient Color", "Avient Luxembourg"],
+            index=None,
+            placeholder="Kunden auswählen ...",)
+
     with col2:
         st.button("Texteingabe löschen", on_click=clear_text)    
     
