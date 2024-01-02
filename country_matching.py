@@ -6,6 +6,7 @@ import re
 import openai
 from dotenv import load_dotenv, find_dotenv
 import langid
+from datetime import datetime
 
 _ = load_dotenv(find_dotenv())
 
@@ -128,7 +129,7 @@ def get_completion(prompt, model="gpt-3.5-turbo"):
 
 def required_countries_zonen(file_path):
     zonen_dict = {}
-    gruppe_dict = {}
+    group_dict = {}
 
     # Open and read the text file   
     with open(file_path, 'r', encoding="utf-8") as file:
@@ -143,7 +144,7 @@ def required_countries_zonen(file_path):
         if len(parts) > 2:
             group = parts[1]
             members = parts[2:]
-            gruppe_dict[group] = members   
+            group_dict[group] = members   
         
         # Check if the key already exists in the dictionary
         if key in zonen_dict:
@@ -153,11 +154,11 @@ def required_countries_zonen(file_path):
             # If the key is new, create a new entry in the dictionary
             zonen_dict[key] = values
     
-    return zonen_dict, gruppe_dict
+    return zonen_dict, group_dict
 
 def required_countries(file_path):
     # criteria for only countries
-    gruppe_dict = {}
+    group_dict = {}
     countries = []
 
     # Open and read the text file
@@ -173,8 +174,8 @@ def required_countries(file_path):
         if len(parts) > 1:
             group = parts[0]
             members = parts[1:]
-            gruppe_dict[group] = members  
-    return countries, gruppe_dict
+            group_dict[group] = members  
+    return countries, group_dict
 
 def detect_languages(text):
     # check whether document is in english or german
@@ -271,75 +272,109 @@ def process_country_text(country_text, group_dict):
     
     return input_countries, tf_countries
 
-def matching_zones_countries(zone_dict, group_dict, input_countries, tf_countries):
-    # Get the current date and time
+def check_countries(countries, group_dict, input_countries, log_de, log_en):
+    missing_countries = []
+    for country in countries:
+        match2 = re.compile(r'(\w+)\s*\/\s*(\w+)', flags=re.IGNORECASE).search(country)
+        if match2:
+            if (match2.group(1) not in input_countries) and (match2.group(2) not in input_countries):
+                missing_countries.append(country)
+            continue
+        if country not in input_countries:
+            missing_countries.append(country)
+    for missing in missing_countries:
+        if missing in group_dict.keys():
+            missing_member = []
+            for member in group_dict[missing]:
+                if member not in input_countries:
+                    missing_member.append(member)
+            if not missing_member:
+                missing_countries = [x for x in missing_countries if x != missing]
+            elif (missing_member == ["HT"]) or (missing_member == ["ZM"]):
+                missing_countries = [x for x in missing_countries if x != missing]
+                text_de = f"Bei der Gruppe {missing} fehlt das Land {missing_member}, ist aber noch nicht anwendbar."
+                text_en = f"In the {missing} group, the country {missing_member} is missing but not yet applicable."
+                log_de.append(text_de)
+                log_en.append(text_en)
+            elif len(missing_member) != len(group_dict[missing]):
+                text_de = f"Gruppe {missing} ist unvollständig, fehlende Länder: {missing_member}"
+                text_en = f"Group {missing} is incomplete, missing countries: {missing_member}"
+                if any(member == "HT" or member == "ZM" for member in missing_member):
+                    text_de += f" aber {', '.join(member for member in missing_member if member == 'HT' or member == 'ZM')} noch nicht anwendbar."
+                    text_en += f" but {', '.join(member for member in missing_member if member == 'HT' or member == 'ZM')} is not applicable yet."
+                log_de.append(text_de)
+                log_en.append(text_en)
+    return missing_countries
+
+def matching_countries(countries, group_dict, input_countries, zonen_dict, tf_countries, selected_option):
     current_datetime = datetime.now()
     formatted_datetime = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
 
     log_de = []
-    log_en =[]
+    log_en =[] 
 
-    for economic_area, countries in zone_dict.items():
-        missing_countries = []
-        for country in countries:
-            match2 = re.compile(r'(\w+)\s*\/\s*(\w+)', flags=re.IGNORECASE).search(country)
-            if match2:
-                if (match2.group(1) not in input_countries) and (match2.group(2) not in input_countries):
-                    missing_countries.append(country)
-                continue
-            if country not in input_countries:
-                missing_countries.append(country)
-
-        for missing in missing_countries:
-            if missing in group_dict.keys():
-                missing_member = []
-                for member in group_dict[missing]:
-                    if member not in input_countries:
-                        missing_member.append(member)
-                if not missing_member:
-                    missing_countries = [x for x in missing_countries if x != missing]
-                elif (missing_member == ["HT"]) or (missing_member == ["ZM"]):
-                    missing_countries = [x for x in missing_countries if x != missing]
-                    text_de = f"Bei der Gruppe {missing} fehlt das Land {missing_member}, ist aber noch nicht anwendbar."
-                    text_en = f"In the {missing} group, the country {missing_member} is missing but not yet applicable."
-                    log_de.append(text_de)  
-                    log_en.append(text_en) 
-                elif len(missing_member) != len(group_dict[missing]):
-                    text_de = f"Gruppe {missing} ist unvollständig, fehlende Länder: {missing_member}"
-                    text_en = f"Group {missing} is incomplete, missing countries: {missing_member}"
-                    if member == "HT" or member == "ZM":
-                        text_de = text_de + f" aber {member} noch nicht anwendbar."
-                        text_en = text_en + f" but {member} is not applicable yet."
-                    log_de.append(text_de)  
-                    log_en.append(text_en) 
+    if selected_option == "Allgemein ohne Wirtschaftszonen":
+        missing_countries = check_countries(countries, group_dict, input_countries, log_de, log_en)
 
         if missing_countries:
-            if economic_area == "0":
-                log_de.append(f"Fehlende Länder/Ländergruppen: {missing_countries} aber noch nicht anwendbar")
-                log_en.append(f"Missing countries/country groups: {missing_countries} but not yet applicable") 
-            else:
-                log_de.append(f"Die Wirtschaftsgebiet {economic_area} ist unvollständig. Fehlende Länder/Ländergruppen: {missing_countries}")
-                log_en.append(f"The economic zone {economic_area} is incomplete. Missing countries/country groups: {missing_countries}")
-            if tf_countries:
-                ignored_tf_countries = []
-                for tf_country in tf_countries:
-                    if tf_country in missing_countries:
-                        ignored_tf_countries.append(tf_country)
-                log_de.append(f"{ignored_tf_countries} sind/ist zwar genannt, jedoch im Rahme von Transitional Rules, welches bei uns noch nicht angewendet werden." )
-                log_en.append(f"{ignored_tf_countries} are/is indeed mentioned but within Transitional Rules, which has not yet been applied.")
+            text_de = f"Fehlende Länder/Ländergruppen: {missing_countries}"
+            text_en = f"Missing countries/country groups: {missing_countries}"
+            if "OCT/ÜLG" in missing_countries:
+                text_de += f" aber OCT/ÜLG noch nicht anwendbar."
+                text_en += f" but OCT/ÜLG is not applicable yet."  
+            log_de.append(text_de)
+            log_en.append(text_en)
 
-    if not log_de:
-        log_de.append("Alles in Ordnung")
-        log_en.append("Everything is in order")
+    else:
+        for economic_area, countries in zonen_dict.items():
+            missing_countries = check_countries(countries, group_dict, input_countries, log_de, log_en)
+            if missing_countries:
+                if selected_option == "Avient Color":
+                    if economic_area == "0":
+                        log_de.append(f"Fehlende Länder/Ländergruppen: {missing_countries} aber noch nicht anwendbar")
+                        log_en.append(f"Missing countries/country groups: {missing_countries} but not yet applicable") 
+                    else:
+                        log_de.append(f"Die Wirtschaftsgebiet {economic_area} ist unvollständig. Fehlende Länder/Ländergruppen: {missing_countries}")
+                        log_en.append(f"The economic zone {economic_area} is incomplete. Missing countries/country groups: {missing_countries}")
+                
+                elif selected_option == "Clariant Gruppe + Heubach":
+                    text_de_zone = f"Die Wirtschaftsgebiet {economic_area} ist unvollständig. Fehlende Länder/Ländergruppen: {missing_countries}"
+                    text_en_zone = f"The economic zone {economic_area} is incomplete. Missing countries/country groups: {missing_countries}"
+                    if "ÜLG/OCT" in missing_countries:
+                        text_de_zone = text_de_zone + f" aber ÜLG/OCT noch nicht anwendbar."
+                        text_en_zone = text_en_zone + f" but ÜLG/OCT is not applicable yet."            
+                    log_de.append(text_de_zone)
+                    log_en.append(text_en_zone)
 
-    for item in log_de:
-        print(item)
-    print(f"Ausführungsdatum und -zeit: {formatted_datetime}")
-    print( )
+                elif selected_option == "Avient Luxembourg":
+                    if economic_area == "Keine Zuordnung":
+                        log_de.append(f"Fehlende Länder/Ländergruppen: {missing_countries} aber noch nicht anwendbar")
+                        log_en.append(f"Missing countries/country groups: {missing_countries} but not yet applicable") 
+                    else:
+                        log_de.append(f"Die Wirtschaftsgebiet {economic_area} ist unvollständig. Fehlende Länder/Ländergruppen: {missing_countries}")
+                        log_en.append(f"The economic zone {economic_area} is incomplete. Missing countries/country groups: {missing_countries}")                    
 
-    for item in log_en:
-        print(item)
-    print(f"Execution date and time: {formatted_datetime}")                 
+                    
+                #Check countries apllying transitional rules
+                ignored_tf_countries = [tf_country for tf_country in tf_countries if tf_country in missing_countries]
+                if ignored_tf_countries:
+                    log_de.append(f"{ignored_tf_countries} sind/ist zwar genannt, jedoch im Rahme von Transitional Rules, welches bei uns noch nicht angewendet werden." )
+                    log_en.append(f"{ignored_tf_countries} are/is indeed mentioned but within Transitional Rules, which has not yet been applied.")
+                    
+
+        if not log_de:
+            log_de.append("Alles in Ordnung")
+            log_en.append("Everything is in order")
+
+        for item in log_de:
+            print(item)
+        print(f"Ausführungsdatum und -zeit: {formatted_datetime}")
+        print( )
+
+        for item in log_en:
+            print(item)
+        print(f"Execution date and time: {formatted_datetime}")      
+                
 
 template_keywords_en = [
     "Long-term supplier's declaration for products having preferential origin status",
@@ -365,19 +400,37 @@ def check_keywords_in_document(document_text, template_keywords):
         print(f"The document matches the template") 
 
 def main():
-    länder_dict, gruppe_dict = required_countries(file_path)
-    input_countries = process_input_text(input_file, gruppe_dict)
-    matching_countries(länder_dict, gruppe_dict, input_countries)
-    check_keywords_in_document(document_text, template_keywords_en)
+    country_text, document_text = split_input_file(input_file)
+    input_countries, tf_countries = process_country_text(country_text, group_dict)
+
+    if selected_option == "Allgemein ohne Wirtschaftszonen":
+        countries, group_dict = required_countries(file_path)
+    else:
+        zonen_dict, group_dict = required_countries_zonen(file_path)
+    
+    matching_countries(countries, group_dict, input_countries, zonen_dict, tf_countries, selected_option)
+    # check_keywords_in_document(document_text, template_keywords_en)
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 3:
         print("Usage: python your_script.py input_file")
         sys.exit(1)
 
     input_file = sys.argv[1]
+    selected_option = sys.argv[2]
+    
     file_path = 'Ländervorgaben.txt' 
     main()
+    if selected_option == "Allgemein ohne Wirtschaftszonen":
+        file_path = 'Ländervorgaben.txt' 
+    elif selected_option == "Clariant Gruppe + Heubach":
+        file_path = 'Ländervorgaben.txt' 
+    elif selected_option == "Avient Color":
+        file_path = 'Ländervorgaben.txt' 
+    elif selected_option == "Avient Luxembourg":
+        file_path = 'Ländervorgaben.txt'     
+    else:
+        print(f"Unknown option: {selected_option}")
+        sys.exit(1)
 
-
-
+            
