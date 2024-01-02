@@ -3,11 +3,11 @@ import subprocess
 import os
 import sys
 
-def run_script(input_text):
+def run_script(input_text, selected_option):
     with open("temp_input.txt","w") as temp_file:
         temp_file.write(input_text)
 
-    result = subprocess.run([f"{sys.executable}", "country_matching.py","temp_input.txt"], capture_output=True, text=True)
+    result = subprocess.run([f"{sys.executable}", "country_matching.py","temp_input.txt",selected_option], capture_output=True, text=True)
 
     os.remove("temp_input.txt")
 
@@ -26,8 +26,15 @@ def main():
     
     col1, col2 = st.columns([3, 1])
 
+    selected_option = st.selectbox(
+        "Wählen Sie Ihren gewünschten Kunden.", 
+        ["Allgemein ohne Wirtschaftszonen", "Clariant Gruppe + Heubach", "Avient Color", "Avient Luxembourg"],
+        index=None,
+        placeholder="Kunden auswählen ...",
+        )
+
     if st.button("Länder prüfen"):
-        output, error = run_script(user_input)
+        output, error = run_script(user_input, selected_option)
 
         st.subheader("Ergebnis:")
         if output:
@@ -35,12 +42,7 @@ def main():
         if error:
             st.error(error)
     
-    with col1:
-        selected_option = st.selectbox(
-            "Wählen Sie Ihren gewünschten Kunden.", 
-            ["Allgemein ohne Wirtschaftszonen", "Clariant Gruppe + Heubach", "Avient Color", "Avient Luxembourg"],
-            index=None,
-            placeholder="Kunden auswählen ...",)
+
 
     with col2:
         st.button("Texteingabe löschen", on_click=clear_text)    
