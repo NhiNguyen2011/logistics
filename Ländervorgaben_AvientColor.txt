@@ -32,7 +32,7 @@
 0 - SG
 3 - TN
 3 - UA
-0 - ÜLG/OCT - AW - BL - BQ - CW - GL - NC - PF - PM - SX - TF - WF
+0 - OCT/ÜLG - AW - BL - BQ - CW - GL - NC - PF - PM - SX - TF - WF
 0 - VN
 2 - WPS - FJ - PG - SB - WS
 2 - XC

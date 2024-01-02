@@ -32,7 +32,7 @@ EUNEW - SADC - BW - LS - MZ - NA - SZ - ZA
 EUAS - SG
 EURES - TN
 EURES - UA
-EUNEW - ÜLG/OCT - AW - BL - BQ - CW - GL - NC - PF - PM - SX - TF - WF
+EUNEW - OCT/ÜLG - AW - BL - BQ - CW - GL - NC - PF - PM - SX - TF - WF
 EUAS - VN
 EUNEW - WPS - FJ - PG - SB - WS
 EURES - XC
