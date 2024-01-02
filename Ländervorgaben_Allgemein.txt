@@ -1,0 +1,40 @@
+AL
+AND - CO - EC - PE
+BA
+CA
+CAF - AG - BB - BS - BZ - DM - DO - GD - GY - JM - KN - LC - SR - TT - VC - HT 
+CAM - CR - GT - HN - NI - PA - SV
+CAS - CM
+CH 
+CI
+CL
+DZ
+EG
+ESA - KM - MG - MU - SC - ZW - ZM
+FO
+GB
+GE
+GH
+IL
+EWR/EEA - LI - NO - IS
+JO
+JP
+KR
+LB
+MA
+MD
+ME
+MK
+MX
+PS
+XS/RS
+SADC - BW - LS - MZ - NA - SZ - ZA
+SG
+TN
+UA
+OCT/ÜLG - AW - BL - BQ - CW - GL - NC - PF - PM - SX - TF - WF
+VN
+WPS - FJ - PG - SB - WS
+XC
+XK
+XL

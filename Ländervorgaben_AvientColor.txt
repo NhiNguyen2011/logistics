@@ -2,7 +2,7 @@
 3 - AND - CO - EC - PE
 2 - BA
 5 - CA
-2 - CAF - AG - BB - BS - BZ - DM - DO - GD - GY - JM - KN - LC - SR - TT - VC - ( HT ) 
+2 - CAF - AG - BB - BS - BZ - DM - DO - GD - GY - JM - KN - LC - SR - TT - VC - HT 
 2 - CAM - CR - GT - HN - NI - PA - SV
 2 - CAS - CM
 1 - CH 
@@ -10,7 +10,7 @@
 3 - CL
 3 - DZ
 3 - EG
-2 - ESA - KM - MG - MU - SC - ZW - ( ZM )
+2 - ESA - KM - MG - MU - SC - ZW - ZM
 2 - FO
 7 - GB
 2 - GE

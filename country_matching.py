@@ -5,10 +5,117 @@ import os
 import re
 import openai
 from dotenv import load_dotenv, find_dotenv
+import langid
 
 _ = load_dotenv(find_dotenv())
 
 openai.api_key  = os.getenv('OPENAI_API_KEY')
+
+abbr_dict = {
+    'Albanien': 'AL',
+    'Andenstaaten': 'AND',
+    'Kolumbien': 'CO',
+    'Ecuador': 'EC',
+    'Peru': 'PE',
+    'Bosnien und Herzegowina': 'BA',
+    'Kanada': 'CA',
+    'CARIFORUM': 'CAF',
+    'Antigua und Barbuda': 'AG',
+    'Barbados': 'BB',
+    'Bahamas': 'BS',
+    'Belize': 'BZ',
+    'Dominica': 'DM',
+    'Dominikanische Republik': 'DO',
+    'Grenada': 'GD',
+    'Guyana': 'GY',
+    'Haiti': 'HT',
+    'Jamaika': 'JM',
+    'St. Kitts und Nevis': 'KN',
+    'St. Lucia': 'LC',
+    'Suriname': 'SR',
+    'Trinidad und Tobago': 'TT',
+    'St. Vincent': 'VC',
+    'Zentralamerika': 'CAM',
+    'Costa Rica': 'CR',
+    'Guatemala': 'GT',
+    'Honduras': 'HN',
+    'Nicaragua': 'NI',
+    'Panama': 'PA',
+    'El Salvador': 'SV',
+    'Zentralafrika oder Kamerun': 'CAS',
+    'Kamerun': 'CM',
+    'Schweiz': 'CH',
+    'Elfenbeinküste — Ivory Coast — Costa d\'Avorio': 'CI',
+    'Chile': 'CL',
+    'Algerien': 'DZ',
+    'Ägypten': 'EG',
+    'Länder des östlichen südlichen Afrikas': 'ESA',
+    'Komoren': 'KM',
+    'Madagaskar': 'MG',
+    'Mauritius': 'MU',
+    'Seychellen': 'SC',
+    'Simbabwe': 'ZW',
+    'Sambia': 'ZM',
+    'Färöer': 'FO',
+    'Great Britain oder United Kingdom': 'GB',
+    'Georgien': 'GE',
+    'Ghana': 'GH',
+    'Israel': 'IL',
+    'Island': 'IS',
+    'Jordanien': 'JO',
+    'Japan': 'JP',
+    'Südkorea': 'KR',
+    'Libanon': 'LB',
+    'Lichtenstein': 'LI',
+    'Marokko': 'MA',
+    'Moldawien': 'MD',
+    'Montenegro': 'ME',
+    'Nord-Mazedonien': 'MK',
+    'Mexiko': 'MX',
+    'Norwegen': 'NO',
+    'Westjordanland und Gazastreifen': 'PS',
+    'Serbien': 'XS oder RS',
+    'Entwicklungsgemeinschaft des südlichen Afrikas': 'SADC',
+    'Botsuana': 'BW',
+    'Lesotho': 'LS',
+    'Mosambik': 'MZ',
+    'Namibia': 'NA',
+    'Swasiland': 'SZ',
+    'Südafrika': 'ZA',
+    'Singapur': 'SG',
+    'Tunesien': 'TN',
+    'Ukraine': 'UA',
+    'Überseeische Länder und Gebiete': 'ÜLG/OCT',
+    'Aruba': 'AW',
+    'Saint-Barthélemy': 'BL',
+    'Bonaire': 'BQ',
+    'Curaçao': 'CW',
+    'Grönland': 'GL',
+    'Neukaledonien': 'NC',
+    'Französisch-Polynesien': 'PF',
+    'St. Pierre und Miquelon': 'PM',
+    'St. Martin': 'SX',
+    'Französische Süd- und Antarktisgebiete': 'TF',
+    'Wallis und Futuna': 'WF',
+    'Vietnam': 'VN',
+    'West-Pazifik-Staaten': 'WPS',
+    'Fidji': 'FJ',
+    'Papua-Neuguinea': 'PG',
+    'Salomonen': 'SB',
+    'Samoa': 'WS',
+    'Ceuta': 'XC',
+    'Kosovo': 'XK',
+    'Melilla': 'XL',
+    'Overseas Countries and Territories': 'OCT',
+    'Eastern and Southern Africa': 'ESA',
+    'Cariforum': 'CAF',
+    'Southern African Development Community': 'SADC',
+    'Western Pacific States': 'WPS',
+    'European Economic Area': 'EEA',
+    'Central America': 'CAM',
+    'Central Africa': 'CAS',
+    'Andean countries': 'AND'
+}
 
 def get_completion(prompt, model="gpt-3.5-turbo"):
     messages = [{"role": "user", "content": prompt}]
@@ -19,19 +126,19 @@ def get_completion(prompt, model="gpt-3.5-turbo"):
     )
     return response.choices[0].message["content"]
 
-def required_countries(file_path):
-    länder_dict = {}
+def required_countries_zonen(file_path):
+    zonen_dict = {}
     gruppe_dict = {}
 
     # Open and read the text file   
-    with open(file_path, 'r') as file:
-        lines = file.readlines()
-
+    with open(file_path, 'r', encoding="utf-8") as file:
+        lines = file.readlines()     
+        
     # Process the lines to create the dictionary
     for line in lines:
         parts = line.strip().split(' - ')  
-        key = int(parts[0])  # integer as key (wirtschaftsregion)
-        values = [parts[1]]   # words as values (Länder)
+        key = parts[0] 
+        values = [parts[1]] 
         
         if len(parts) > 2:
             group = parts[1]
@@ -39,60 +146,140 @@ def required_countries(file_path):
             gruppe_dict[group] = members   
         
         # Check if the key already exists in the dictionary
-        if key in länder_dict:
+        if key in zonen_dict:
             # If the key exists, append the new values to the existing list of values
-            länder_dict[key].extend(values)
+            zonen_dict[key].extend(values)
         else:
             # If the key is new, create a new entry in the dictionary
-            länder_dict[key] = values
+            zonen_dict[key] = values
     
-    return länder_dict, gruppe_dict
+    return zonen_dict, gruppe_dict
 
-def process_input_text(input_file, gruppe_dict):
+def required_countries(file_path):
+    # criteria for only countries
+    gruppe_dict = {}
+    countries = []
+
+    # Open and read the text file
+    file_path = 'Ländervorgaben\\Ländervorgaben_Allgemein.txt'    
+    with open(file_path, 'r', encoding="utf-8") as file:
+        lines = file.readlines()
+
+    # Process the lines to create the dictionary
+    for line in lines:
+        parts = line.strip().split(' - ')  
+        countries.append(parts[0])
+
+        if len(parts) > 1:
+            group = parts[0]
+            members = parts[1:]
+            gruppe_dict[group] = members  
+    return countries, gruppe_dict
+
+def detect_languages(text):
+    # check whether document is in english or german
+    all_langs = [lang for lang, _ in langid.rank(text)]
+    return all_langs[:2]
+
+def split_input_file(input_file):
     with open(input_file,'r', encoding="utf-8") as file:
-        content = file.read()
-        
-    pattern = re.compile(r'\b([A-ZÜ]{2,4})\b')
+        text = file.read()
 
-    match = re.findall(pattern,content)
+    detected_languages = detect_languages(text)
 
-    if len(match) >= 10: 
-        pattern1 = re.compile("Cariforum", re.IGNORECASE)
-        content = pattern1.sub("CAF", content)
+    if 'en' in detected_languages:
+        start_string = "preferential trade with"
+        end_string = "I declare that"
+        text_start_string = "long"
+    elif 'de' in detected_languages:
+        start_string = "Präferenzverkehr mit"
+        end_string = "entsprechen"    
+        text_start_string = "langzeit"
 
-        input_countries = re.findall(pattern,content)
-    else: 
-        text = content
+    start_index = text.find(start_string) + len(start_string)
+    end_index = text.find(end_string)
+
+    # extract list of countries
+    country_text = text[start_index:end_index]
+
+    text_start_index = text.lower().find(text_start_string)
+    document_text = text[text_start_index:start_index] + '\n' + text[end_index:]    
+    return country_text, document_text
+
+def process_country_text(country_text, group_dict):
+    # Extract country code from document 
+    tf_countries = []
+    # exclude the group that applies transitional rules
+    if ("transitional rules" in country_text.lower()) or ("übergangsbestimmungen" in country_text.lower()):
         prompt = f"""
-        Given a text containing country names and specific regional groupings or partnerships in various languages, 
-        transform the country names into corresponding ISO 3166-1 alpha-2 country codes and 
-        specific regional groupings or partnerships into corresponding abbreviations based on the following instructions:          
-            - Overseas Countries and Territories: OCT
-            - Eastern and Southern Africa: ESA
-            - Cariforum: CAF
-            - Southern African Development Community: SADC
-            - Western Pacific States: WPS
-            - European Economic Area: EEA
-            - Central America: CAM
-            - Central Africa: CAS
-            - Andean countries: AND
-        Provide them in a list format
-        
-        ```{text}```
+        You will receive a list of countries organized into specific regional groupings or partnerships in various languages.
+        Identify the country group that applies "Transitional rules". 
+        The keyword "Transitional rules"("Übergangsbestimmungen" in German) may appear either at the line before or at the end of the line.
+        It can also be marked with a visual delimiter or marker indicating that "Transitional rules" apply to all countries in that line.
+        Find the entire line mentioning the country group and its associated countries that apply "Transitional rules" in the given text.
+        Return the line as plaintext enclosed within triple backticks, excluding the line "Transitional rules (Gilt für alle Länder in dieser Zeile)"
+
+        Text:
+        ```{country_text}```
         """
-        result = get_completion(prompt)
-        input_countries = re.findall(pattern,result)
+        
+        rm_text = get_completion(prompt)
+        try:
+            match = re.search(r"```(.+?)```", rm_text, re.DOTALL)  # match newline characters as well.
+            if match:
+                transitional_rule = match.group(1).strip()
+                tf_countries = re.findall(r'\b([A-Z]{2})\b', transitional_rule)
+                
+                # remove the line that applies transitional rules in the text
+                start_index_tr = country_text.find(transitional_rule)
+                end_index_tr = start_index_tr + len(transitional_rule)
+                country_text = country_text[:start_index_tr] + country_text[end_index_tr:]
+            else:
+                raise ValueError("Error: Countries applying transitional rules not found in the text.")
 
-    for key, values in gruppe_dict.items():
-        if (key in input_countries) and any(value in input_countries for value in values):
-            input_countries.remove(key)
+        except ValueError as e:
+            print(e)
+
+    country_text = country_text.upper()   
+    pattern = re.compile(r'\b([A-Z]{2,4})\b') # set pattern to find country code
+
+    # extract the country codes using API OpenAI
+    prompt = f"""
+    Given a text containing country names and specific regional groupings or partnerships in various languages, 
+    transform the country names and regional groupings into corresponding abbreviations based on the provided dictionary '''{abbr_dict}'''.          
+    Provide the corresponding abbreviations in a list format, not the long forms of country 
+    Text:
+    ```{country_text}```
+    """
+    result = get_completion(prompt)
+    input_countries_gpt = re.findall(pattern,result)
+    input_countries_re = re.findall(pattern,country_text)
+    input_countries = list(set(input_countries_gpt + input_countries_re))
+
+    # Either only the country group name present, or all belonging countries must present
+    # Exception for SADC
+    for key, values in group_dict.items():
+        if key in input_countries: 
+            if key == 'SADC':
+                common_value = [value for value in values if value in input_countries]
+                if common_value == ['ZA']:
+                    continue
+                else:
+                    input_countries.remove(key)
+            elif any(value in input_countries for value in values):
+                input_countries.remove(key)
     
-    return input_countries
+    return input_countries, tf_countries
 
-def matching_countries(länder_dict, gruppe_dict, input_countries):
-    log = []
+def matching_zones_countries(zone_dict, group_dict, input_countries, tf_countries):
+    # Get the current date and time
+    current_datetime = datetime.now()
+    formatted_datetime = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
 
-    for economic_area, countries in länder_dict.items():
+    log_de = []
+    log_en =[]
+
+    for economic_area, countries in zone_dict.items():
         missing_countries = []
         for country in countries:
             match2 = re.compile(r'(\w+)\s*\/\s*(\w+)', flags=re.IGNORECASE).search(country)
@@ -104,36 +291,84 @@ def matching_countries(länder_dict, gruppe_dict, input_countries):
                 missing_countries.append(country)
 
         for missing in missing_countries:
-            if missing in gruppe_dict.keys():
+            if missing in group_dict.keys():
                 missing_member = []
-                for member in gruppe_dict[missing]:
-                    match1 = re.compile(r'\(\s*(\w+)\s*\)').search(member)
-                    if match1:
-                        member = match1.group(1)
+                for member in group_dict[missing]:
                     if member not in input_countries:
                         missing_member.append(member)
                 if not missing_member:
                     missing_countries = [x for x in missing_countries if x != missing]
-                elif len(missing_member) != len(gruppe_dict[missing]):
-                    text = f"Gruppe {missing} ist unvollständig, fehlende Länder: {missing_member}"
+                elif (missing_member == ["HT"]) or (missing_member == ["ZM"]):
+                    missing_countries = [x for x in missing_countries if x != missing]
+                    text_de = f"Bei der Gruppe {missing} fehlt das Land {missing_member}, ist aber noch nicht anwendbar."
+                    text_en = f"In the {missing} group, the country {missing_member} is missing but not yet applicable."
+                    log_de.append(text_de)  
+                    log_en.append(text_en) 
+                elif len(missing_member) != len(group_dict[missing]):
+                    text_de = f"Gruppe {missing} ist unvollständig, fehlende Länder: {missing_member}"
+                    text_en = f"Group {missing} is incomplete, missing countries: {missing_member}"
                     if member == "HT" or member == "ZM":
-                        text = text + f" aber {member} noch nicht anwendbar"
-                    log.append(text)  
-            
+                        text_de = text_de + f" aber {member} noch nicht anwendbar."
+                        text_en = text_en + f" but {member} is not applicable yet."
+                    log_de.append(text_de)  
+                    log_en.append(text_en) 
+
         if missing_countries:
-            log.append(f"Die Wirtschaftsgebiet {economic_area} ist unvollständig. Fehlende Länder: {missing_countries}")
+            if economic_area == "0":
+                log_de.append(f"Fehlende Länder/Ländergruppen: {missing_countries} aber noch nicht anwendbar")
+                log_en.append(f"Missing countries/country groups: {missing_countries} but not yet applicable") 
+            else:
+                log_de.append(f"Die Wirtschaftsgebiet {economic_area} ist unvollständig. Fehlende Länder/Ländergruppen: {missing_countries}")
+                log_en.append(f"The economic zone {economic_area} is incomplete. Missing countries/country groups: {missing_countries}")
+            if tf_countries:
+                ignored_tf_countries = []
+                for tf_country in tf_countries:
+                    if tf_country in missing_countries:
+                        ignored_tf_countries.append(tf_country)
+                log_de.append(f"{ignored_tf_countries} sind/ist zwar genannt, jedoch im Rahme von Transitional Rules, welches bei uns noch nicht angewendet werden." )
+                log_en.append(f"{ignored_tf_countries} are/is indeed mentioned but within Transitional Rules, which has not yet been applied.")
 
-    if not log:
-        log.append("Alles in Ordnung")
+    if not log_de:
+        log_de.append("Alles in Ordnung")
+        log_en.append("Everything is in order")
 
-    for item in log:
-        print(item)                   
+    for item in log_de:
+        print(item)
+    print(f"Ausführungsdatum und -zeit: {formatted_datetime}")
+    print( )
 
+    for item in log_en:
+        print(item)
+    print(f"Execution date and time: {formatted_datetime}")                 
+
+template_keywords_en = [
+    "Long-term supplier's declaration for products having preferential origin status",
+    "Declaration",
+    "I, the undersigned, declare that the goods described below",
+    "which are regularly supplied to",
+    "originate in",
+    "and satisfy the rules of origin governing preferential trade with",
+    "I declare that",
+    "This declaration is valid for all shipments of these products dispatched from",
+    "I undertake to inform",
+    "I undertake to make available to the customs authorities any further supporting documents they require.",
+]
+
+def check_keywords_in_document(document_text, template_keywords):
+    missing = []
+    for keyword in template_keywords:
+        if keyword.lower() not in document_text.lower():
+            missing.append(keyword)
+            print(f'The document does not match the template at: "{keyword}"')
+            
+    if not missing:
+        print(f"The document matches the template") 
 
 def main():
     länder_dict, gruppe_dict = required_countries(file_path)
     input_countries = process_input_text(input_file, gruppe_dict)
     matching_countries(länder_dict, gruppe_dict, input_countries)
+    check_keywords_in_document(document_text, template_keywords_en)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
