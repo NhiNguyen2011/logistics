@@ -263,7 +263,7 @@ def process_country_text(country_text, group_dict):
         if key in input_countries: 
             if key == 'SADC':
                 common_value = [value for value in values if value in input_countries]
-                if common_value == ['ZA']:
+                if (not common_value) or (common_value == ['ZA']):
                     continue
                 else:
                     input_countries.remove(key)
@@ -326,8 +326,8 @@ def matching_countries(countries, group_dict, input_countries, zonen_dict, tf_co
             log_en.append(text_en)
 
     else:
-        for economic_area, countries in zonen_dict.items():
-            missing_countries = check_countries(countries, group_dict, input_countries, log_de, log_en)
+        for economic_area, zone_countries in zonen_dict.items():
+            missing_countries = check_countries(zone_countries, group_dict, input_countries, log_de, log_en)
             if missing_countries:
                 if selected_option == "Avient Color":
                     if economic_area == "0":
@@ -401,12 +401,15 @@ def check_keywords_in_document(document_text, template_keywords):
 
 def main():
     country_text, document_text = split_input_file(input_file)
-    input_countries, tf_countries = process_country_text(country_text, group_dict)
 
     if selected_option == "Allgemein ohne Wirtschaftszonen":
         countries, group_dict = required_countries(file_path)
+        zonen_dict = {}
     else:
+        countries = []
         zonen_dict, group_dict = required_countries_zonen(file_path)
+
+    input_countries, tf_countries = process_country_text(country_text, group_dict)
     
     matching_countries(countries, group_dict, input_countries, zonen_dict, tf_countries, selected_option)
     # check_keywords_in_document(document_text, template_keywords_en)
@@ -418,19 +421,19 @@ if __name__ == "__main__":
 
     input_file = sys.argv[1]
     selected_option = sys.argv[2]
-    
-    file_path = 'Ländervorgaben.txt' 
-    main()
+
     if selected_option == "Allgemein ohne Wirtschaftszonen":
-        file_path = 'Ländervorgaben.txt' 
+        file_path = 'Ländervorgaben_Allgemein.txt' 
     elif selected_option == "Clariant Gruppe + Heubach":
-        file_path = 'Ländervorgaben.txt' 
+        file_path = 'Ländervorgaben_AvientClariantGruppeHeubach.txt' 
     elif selected_option == "Avient Color":
-        file_path = 'Ländervorgaben.txt' 
+        file_path = 'Ländervorgaben_AvientColor.txt' 
     elif selected_option == "Avient Luxembourg":
-        file_path = 'Ländervorgaben.txt'     
+        file_path = 'Ländervorgaben_AvientLuxembourg.txt'     
     else:
         print(f"Unknown option: {selected_option}")
         sys.exit(1)
+    
+    main()
 
             
