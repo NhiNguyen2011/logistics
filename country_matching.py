@@ -377,7 +377,8 @@ template_keywords_en = [
     "I declare that",
     "This declaration is valid for all shipments of these products dispatched from",
     "I undertake to inform",
-    "immediately if this declaration is no longer valid",
+    "immediately",
+    "if this declaration is no longer valid",
     "I undertake to make available to the customs authorities any further supporting documents they require"
 ]
 
@@ -391,12 +392,13 @@ template_keywords_de = [
     "Er erklärt Folgendes",
     "Diese Erklärung gilt für alle Sendungen dieser Waren im Zeitraum",
     "Der Unterzeichner verpflichtet sich",
-    "umgehend zu unterrichten, wenn diese Erklärung ihre Geltung verliert"
+    "umgehend zu unterrichten",
+    "wenn diese Erklärung ihre Geltung verliert",
     "Er verpflichtet sich, den Zollbehörden alle von ihnen zusätzlich verlangten Belege zur Verfügung zu stellen"
 ]
 
 
-def check_keywords_in_document(document_text, template_keywords):
+def check_keywords_in_document(document_text, template_keywords,template_keywords_de):
     missing = []
     
     if "declaration" in document_text.lower():
@@ -405,19 +407,57 @@ def check_keywords_in_document(document_text, template_keywords):
             if keyword.lower() not in document_text_st:
                 missing.append(keyword)
                 print(f'The document does not match the template at: "{keyword}"')
+        
+        words = document_text.lower().split()
+        word_count=words.count("cumulation")
+
+        match = re.search(r'\bx\b',document_text, flags=re.IGNORECASE)
+
+        if word_count > 1:
+            if match:
+                # Get the position of the match
+                x_index = match.start()
+                for i in range(x_index+1,len(document_text)):
+                    if document_text[i].isalpha():
+                        next_alphabet = document_text[i]
+                        break
+
+                if next_alphabet.upper() == 'C':
+                    print("'No cumulation applied' is not selected")
+        elif "no cumulation applied" not in document_text.lower():
+                print("The document does not match the template at: 'No cumulation applied'")
                 
         if not missing:
-            print(f"The document matches the template") 
+            print(f"The document matches the template.") 
 
-    # elif "Erklärung" in document_text:
-    #     document_text_st = document_text.lower().replace("long term","long-term").replace("\n"," ").replace("  "," ")
-    #     for keyword in template_keywords:
-    #         if keyword.lower() not in document_text_st:
-    #             missing.append(keyword)
-    #             print(f'The document does not match the template at: "{keyword}"')
+    elif "Erklärung" in document_text:
+        document_text_st = document_text.replace("\n"," ").replace("  "," ")
+        for keyword in template_keywords:
+            if keyword not in document_text_st:
+                missing.append(keyword)
+                print(f'"Das Dokument entspricht nicht der Vorlage an der Stelle: "{keyword}"')
+        
+        words = document_text.lower().split()
+        word_count=words.count("Kumulierung")
+
+        match = re.search(r'\bX\b',document_text, flags=re.IGNORECASE)
+
+        if word_count > 1:
+            if match:
+                # Get the position of the match
+                x_index = match.start()
+                for i in range(x_index+1,len(document_text)):
+                    if document_text[i].isalpha():
+                        next_alphabet = document_text[i]
+                        break
+
+                if next_alphabet.upper() == 'KU':
+                    print("'Keine Kumulierung angewendet' ist nicht ausgewählt")
+        elif "Keine Kumulierung angewendet" not in document_text.lower():
+                print("Das Dokument entspricht nicht der Vorlage an der Stelle: 'Keine Kumulierung angewendet'")
                 
-    #     if not missing:
-    #         print(f"The document matches the template") 
+        if not missing:
+            print(f"Das Dokument entspricht der Vorlage.") 
     
     else:
         raise ValueError("Unsupported language detected/ Sprache unerkannt")
@@ -437,7 +477,7 @@ def main():
     input_countries, tf_countries = process_country_text(country_text, group_dict)
     
     matching_countries(countries, group_dict, input_countries, zonen_dict, tf_countries, selected_option)
-    check_keywords_in_document(text, template_keywords_en)
+    check_keywords_in_document(text, template_keywords_en,template_keywords_de)
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
