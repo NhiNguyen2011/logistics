@@ -161,8 +161,7 @@ def required_countries(file_path):
     group_dict = {}
     countries = []
 
-    # Open and read the text file
-    file_path = 'Ländervorgaben\\Ländervorgaben_Allgemein.txt'    
+    # Open and read the text file   
     with open(file_path, 'r', encoding="utf-8") as file:
         lines = file.readlines()
 
@@ -177,35 +176,28 @@ def required_countries(file_path):
             group_dict[group] = members  
     return countries, group_dict
 
+def get_text(input_file):
+    with open(input_file, 'r') as file:
+        text = file.read()
+    return text
+
 def detect_languages(text):
     # check whether document is in english or german
     all_langs = [lang for lang, _ in langid.rank(text)]
     return all_langs[:2]
 
-def split_input_file(input_file):
-    with open(input_file,'r', encoding="utf-8") as file:
-        text = file.read()
+def get_country_text(text):
+    prompt= f"""
+    You will receive a text.
+    Return exactly the part of text that contains the list of countries organized into specific regional groupings or partnerships in various languages, 
+    together with its notes marked with a visual delimiter or marker at the end if exist.
+    Don't repeat the prompt in the result. Don't change anything from the original text.
+    Text:
+    ```{text}```
+    """
 
-    detected_languages = detect_languages(text)
-
-    if 'en' in detected_languages:
-        start_string = "preferential trade with"
-        end_string = "I declare that"
-        text_start_string = "long"
-    elif 'de' in detected_languages:
-        start_string = "Präferenzverkehr mit"
-        end_string = "entsprechen"    
-        text_start_string = "langzeit"
-
-    start_index = text.find(start_string) + len(start_string)
-    end_index = text.find(end_string)
-
-    # extract list of countries
-    country_text = text[start_index:end_index]
-
-    text_start_index = text.lower().find(text_start_string)
-    document_text = text[text_start_index:start_index] + '\n' + text[end_index:]    
-    return country_text, document_text
+    response = get_completion(prompt)
+    return response
 
 def process_country_text(country_text, group_dict):
     # Extract country code from document 
@@ -362,45 +354,78 @@ def matching_countries(countries, group_dict, input_countries, zonen_dict, tf_co
                     log_en.append(f"{ignored_tf_countries} are/is indeed mentioned but within Transitional Rules, which has not yet been applied.")
                     
 
-        if not log_de:
-            log_de.append("Alles in Ordnung")
-            log_en.append("Everything is in order")
+    if not log_de:
+        log_de.append("Alles in Ordnung")
+        log_en.append("Everything is in order")
 
-        for item in log_de:
-            print(item)
-        print(f"Ausführungsdatum und -zeit: {formatted_datetime}")
-        print( )
+    for item in log_de:
+        print(item)
+    print(f"Ausführungsdatum und -zeit: {formatted_datetime}")
+    print( )
 
-        for item in log_en:
-            print(item)
-        print(f"Execution date and time: {formatted_datetime}")      
+    for item in log_en:
+        print(item)
+    print(f"Execution date and time: {formatted_datetime}")      
                 
-
 template_keywords_en = [
     "Long-term supplier's declaration for products having preferential origin status",
     "Declaration",
-    "I, the undersigned, declare that the goods described below",
+    "I, the undersigned, declare that the goods described",
     "which are regularly supplied to",
     "originate in",
-    "and satisfy the rules of origin governing preferential trade with",
+    "satisfy the rules of origin governing preferential trade with",
     "I declare that",
     "This declaration is valid for all shipments of these products dispatched from",
     "I undertake to inform",
-    "I undertake to make available to the customs authorities any further supporting documents they require.",
+    "immediately if this declaration is no longer valid",
+    "I undertake to make available to the customs authorities any further supporting documents they require"
 ]
+
+template_keywords_de = [
+    "Lieferantenerklärung für Waren mit Präferenzursprungseigenschaft",
+    "Erklärung",
+    "Der Unterzeichner erklärt, dass die in diesem Dokument aufgeführten",
+    "Waren Ursprungserzeugnisse",
+    "sind und den Ursprungsregeln für den Präferenzverkehr",
+    "entsprechen"
+    "Er erklärt Folgendes",
+    "Diese Erklärung gilt für alle Sendungen dieser Waren im Zeitraum",
+    "Der Unterzeichner verpflichtet sich",
+    "umgehend zu unterrichten, wenn diese Erklärung ihre Geltung verliert"
+    "Er verpflichtet sich, den Zollbehörden alle von ihnen zusätzlich verlangten Belege zur Verfügung zu stellen"
+]
+
 
 def check_keywords_in_document(document_text, template_keywords):
     missing = []
-    for keyword in template_keywords:
-        if keyword.lower() not in document_text.lower():
-            missing.append(keyword)
-            print(f'The document does not match the template at: "{keyword}"')
-            
-    if not missing:
-        print(f"The document matches the template") 
+    
+    if "declaration" in document_text.lower():
+        document_text_st = document_text.lower().replace("long term","long-term").replace("\n"," ").replace("  "," ")
+        for keyword in template_keywords:
+            if keyword.lower() not in document_text_st:
+                missing.append(keyword)
+                print(f'The document does not match the template at: "{keyword}"')
+                
+        if not missing:
+            print(f"The document matches the template") 
+
+    # elif "Erklärung" in document_text:
+    #     document_text_st = document_text.lower().replace("long term","long-term").replace("\n"," ").replace("  "," ")
+    #     for keyword in template_keywords:
+    #         if keyword.lower() not in document_text_st:
+    #             missing.append(keyword)
+    #             print(f'The document does not match the template at: "{keyword}"')
+                
+    #     if not missing:
+    #         print(f"The document matches the template") 
+    
+    else:
+        raise ValueError("Unsupported language detected/ Sprache unerkannt")
 
 def main():
-    country_text, document_text = split_input_file(input_file)
+    text = get_text(input_file)
+    country_text = get_country_text(text)
+    print(country_text)    
 
     if selected_option == "Allgemein ohne Wirtschaftszonen":
         countries, group_dict = required_countries(file_path)
@@ -412,7 +437,7 @@ def main():
     input_countries, tf_countries = process_country_text(country_text, group_dict)
     
     matching_countries(countries, group_dict, input_countries, zonen_dict, tf_countries, selected_option)
-    # check_keywords_in_document(document_text, template_keywords_en)
+    check_keywords_in_document(text, template_keywords_en)
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -433,7 +458,7 @@ if __name__ == "__main__":
     else:
         print(f"Unknown option: {selected_option}")
         sys.exit(1)
-    
+
     main()
 
             

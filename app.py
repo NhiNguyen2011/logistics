@@ -7,7 +7,7 @@ def run_script(input_text, selected_option):
     with open("temp_input.txt","w") as temp_file:
         temp_file.write(input_text)
 
-    result = subprocess.run([f"{sys.executable}", "country_matching.py","temp_input.txt",selected_option], capture_output=True, text=True)
+    result = subprocess.run([f"{sys.executable}", "country_matching.py", "temp_input.txt", selected_option], capture_output=True, text=True)
 
     os.remove("temp_input.txt")
 
