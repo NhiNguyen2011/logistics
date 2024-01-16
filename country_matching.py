@@ -398,12 +398,12 @@ template_keywords_de = [
 ]
 
 
-def check_keywords_in_document(document_text, template_keywords,template_keywords_de):
+def check_keywords_in_document(document_text, template_keywords_en,template_keywords_de):
     missing = []
     
     if "declaration" in document_text.lower():
         document_text_st = document_text.lower().replace("long term","long-term").replace("\n"," ").replace("  "," ")
-        for keyword in template_keywords:
+        for keyword in template_keywords_en:
             if keyword.lower() not in document_text_st:
                 missing.append(keyword)
                 print(f'The document does not match the template at: "{keyword}"')
@@ -432,7 +432,7 @@ def check_keywords_in_document(document_text, template_keywords,template_keyword
 
     elif "Erklärung" in document_text:
         document_text_st = document_text.replace("\n"," ").replace("  "," ")
-        for keyword in template_keywords:
+        for keyword in template_keywords_de:
             if keyword not in document_text_st:
                 missing.append(keyword)
                 print(f'"Das Dokument entspricht nicht der Vorlage an der Stelle: "{keyword}"')
