@@ -358,114 +358,68 @@ def matching_countries(countries, group_dict, input_countries, zonen_dict, tf_co
         log_de.append("Alles in Ordnung")
         log_en.append("Everything is in order")
 
-    for item in log_de:
-        print(item)
-    print(f"Ausführungsdatum und -zeit: {formatted_datetime}")
-    print( )
-
-    for item in log_en:
-        print(item)
-    print(f"Execution date and time: {formatted_datetime}")      
-                
+    return formatted_datetime, log_de, log_en
+              
 template_keywords_en = [
-    "Long-term supplier's declaration for products having preferential origin status",
-    "Declaration",
-    "I, the undersigned, declare that the goods described",
-    "which are regularly supplied to",
-    "originate in",
-    "satisfy the rules of origin governing preferential trade with",
-    "I declare that",
-    "This declaration is valid for all shipments of these products dispatched from",
-    "I undertake to inform",
-    "immediately",
-    "if this declaration is no longer valid",
-    "I undertake to make available to the customs authorities any further supporting documents they require"
+    r"Long.*term supplier's declaration for products having preferential origin status",
+    r"Declaration",
+    r"I, the undersigned, declare that the goods described.*which are regularly supplied to.*originate in.*and.*satisfy the rules of origin governing preferential trade with",
+    r"I declare that",
+    r"This declaration is valid for all shipments of these products dispatched from.*to",
+    r"I undertake to inform.*immediately.*if this declaration is no longer valid",
+    r"I undertake to make available to the customs authorities any further supporting documents they require"
 ]
 
 template_keywords_de = [
-    "Lieferantenerklärung für Waren mit Präferenzursprungseigenschaft",
-    "Erklärung",
-    "Der Unterzeichner erklärt, dass die in diesem Dokument aufgeführten",
-    "Waren Ursprungserzeugnisse",
-    "sind und den Ursprungsregeln für den Präferenzverkehr",
-    "entsprechen"
-    "Er erklärt Folgendes",
-    "Diese Erklärung gilt für alle Sendungen dieser Waren im Zeitraum",
-    "Der Unterzeichner verpflichtet sich",
-    "umgehend zu unterrichten",
-    "wenn diese Erklärung ihre Geltung verliert",
-    "Er verpflichtet sich, den Zollbehörden alle von ihnen zusätzlich verlangten Belege zur Verfügung zu stellen"
-]
+    r"Langzeit-Lieferantenerklärung für Waren mit Präferenzursprungseigenschaft",
+    r"Erklärung",
+    r"Der Unterzeichner erklärt, dass die nachstehend bezeichneten Waren.*die regelmäßig an.*geliefert werden, Ursprungserzeugnisse.*sind und den Ursprungsregeln für den Präferenzverkehr mit.*entsprechen",
+    r"Er erklärt Folgendes",
+    r"Diese Erklärung gilt für alle Sendungen dieser Waren im Zeitraum",
+    r"Der Unterzeichner verpflichtet sich,.*umgehend zu unterrichten, wenn diese Erklärung ihre Geltung verliert",
+    r"Er verpflichtet sich, den Zollbehörden alle von ihnen zusätzlich verlangten Belege zur Verfügung zu stellen"
+] 
 
+def check_keywords(keyword_list, text, missing_keyword):
+    for keyword in keyword_list:
+        keyword_regex = re.compile(keyword, re.IGNORECASE)
+        if not keyword_regex.search(text):
+            missing_keyword.append(keyword)
+ 
+def check_cumulation(word, text, target_char, phrase,missing_keyword):
+    count = text.lower().split().count(word.lower())
+    match = re.search(r'\bx\b',text, flags=re.IGNORECASE)
+ 
+    if count > 1 and match:
+        x_index = match.start() # Get the position of the match
+        for i in range(x_index+1,len(text)):
+ 
+            if text[i].isalpha():
+                break
+ 
+        if text[i].lower() == target_char and text[i+1] == 'u':
+            missing_keyword.append(phrase)                
+    elif phrase.lower() not in text.lower():
+        missing_keyword.append(phrase)
 
-def check_keywords_in_document(document_text, template_keywords_en,template_keywords_de):
-    missing = []
-    
+def check_keywords_in_document(document_text, template_keywords_en, template_keywords_de):
+    missing_keyword = []
+    document_text_st = document_text.replace("\n"," ").replace("  "," ")
     if "declaration" in document_text.lower():
-        document_text_st = document_text.lower().replace("long term","long-term").replace("\n"," ").replace("  "," ")
-        for keyword in template_keywords_en:
-            if keyword.lower() not in document_text_st:
-                missing.append(keyword)
-                print(f'The document does not match the template at: "{keyword}"')
-        
-        words = document_text.lower().split()
-        word_count=words.count("cumulation")
-
-        match = re.search(r'\bx\b',document_text, flags=re.IGNORECASE)
-
-        if word_count > 1:
-            if match:
-                # Get the position of the match
-                x_index = match.start()
-                for i in range(x_index+1,len(document_text)):
-                    if document_text[i].isalpha():
-                        next_alphabet = document_text[i]
-                        break
-
-                if next_alphabet.upper() == 'C':
-                    print("'No cumulation applied' is not selected")
-        elif "no cumulation applied" not in document_text.lower():
-                print("The document does not match the template at: 'No cumulation applied'")
-                
-        if not missing:
-            print(f"The document matches the template.") 
-
+        check_keywords(template_keywords_en, document_text_st, missing_keyword)
+        check_cumulation("cumulation", document_text, "c", "No cumulation applied",missing_keyword)
+ 
     elif "Erklärung" in document_text:
-        document_text_st = document_text.replace("\n"," ").replace("  "," ")
-        for keyword in template_keywords_de:
-            if keyword not in document_text_st:
-                missing.append(keyword)
-                print(f'"Das Dokument entspricht nicht der Vorlage an der Stelle: "{keyword}"')
-        
-        words = document_text.lower().split()
-        word_count=words.count("Kumulierung")
-
-        match = re.search(r'\bX\b',document_text, flags=re.IGNORECASE)
-
-        if word_count > 1:
-            if match:
-                # Get the position of the match
-                x_index = match.start()
-                for i in range(x_index+1,len(document_text)):
-                    if document_text[i].isalpha():
-                        next_alphabet = document_text[i]
-                        break
-
-                if next_alphabet.upper() == 'KU':
-                    print("'Keine Kumulierung angewendet' ist nicht ausgewählt")
-        elif "Keine Kumulierung angewendet" not in document_text.lower():
-                print("Das Dokument entspricht nicht der Vorlage an der Stelle: 'Keine Kumulierung angewendet'")
-                
-        if not missing:
-            print(f"Das Dokument entspricht der Vorlage.") 
-    
+        check_keywords(template_keywords_de, document_text_st, missing_keyword)
+        check_cumulation("Kumulierung", document_text, "k", "Keine Kumulierung angewendet",missing_keyword)
     else:
         raise ValueError("Unsupported language detected/ Sprache unerkannt")
-
+ 
+    return missing_keyword
+            
 def main():
     text = get_text(input_file)
     country_text = get_country_text(text)
-    print(country_text)    
 
     if selected_option == "Allgemein ohne Wirtschaftszonen":
         countries, group_dict = required_countries(file_path)
@@ -476,12 +430,29 @@ def main():
 
     input_countries, tf_countries = process_country_text(country_text, group_dict)
     
-    matching_countries(countries, group_dict, input_countries, zonen_dict, tf_countries, selected_option)
-    check_keywords_in_document(text, template_keywords_en,template_keywords_de)
+    execution_datetime, log_de, log_en = matching_countries(countries, group_dict, input_countries, zonen_dict, tf_countries, selected_option)
+    missing_keyword = check_keywords_in_document(text, template_keywords_en,template_keywords_de)
+
+    print(f"Ausführungsdatum und -zeit:/ Execution date and time: {execution_datetime}")
+    for item in log_de:
+        print(item)
+    print( )
+  
+    for item in log_en:
+        print(item)
+    print( )
+
+    if not missing_keyword:
+        print("The document matches the template./ Das Dokument entspricht der Vorlage.")
+    else:
+        print('The document does not match the template at:/ Das Dokument entspricht nicht der Vorlage an den Stellen:')
+        for m in missing_keyword:
+            m = m.replace(".*","...")
+            print(f"- {m}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: python your_script.py input_file")
+        print("Please fill in the text field and select an option from dropdown list")
         sys.exit(1)
 
     input_file = sys.argv[1]
