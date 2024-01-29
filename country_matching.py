@@ -234,7 +234,7 @@ def process_country_text(country_text, group_dict):
             print(e)
 
     country_text = country_text.upper()   
-    pattern = re.compile(r'\b([A-Z]{2,4})\b') # set pattern to find country code
+    pattern = re.compile(r'\b([A-ZÄÖÜ]{2,4})\b') # set pattern to find country code
 
     # extract the country codes using API OpenAI
     prompt = f"""
@@ -332,9 +332,9 @@ def matching_countries(countries, group_dict, input_countries, zonen_dict, tf_co
                 elif selected_option == "Clariant Gruppe + Heubach":
                     text_de_zone = f"Die Wirtschaftsgebiet {economic_area} ist unvollständig. Fehlende Länder/Ländergruppen: {missing_countries}"
                     text_en_zone = f"The economic zone {economic_area} is incomplete. Missing countries/country groups: {missing_countries}"
-                    if "ÜLG/OCT" in missing_countries:
-                        text_de_zone = text_de_zone + f" aber ÜLG/OCT noch nicht anwendbar."
-                        text_en_zone = text_en_zone + f" but ÜLG/OCT is not applicable yet."            
+                    if "OCT/ÜLG" in missing_countries:
+                        text_de_zone = text_de_zone + f" aber OCT/ÜLG noch nicht anwendbar."
+                        text_en_zone = text_en_zone + f" but OCT/ÜLG is not applicable yet."            
                     log_de.append(text_de_zone)
                     log_en.append(text_en_zone)
 
@@ -361,7 +361,7 @@ def matching_countries(countries, group_dict, input_countries, zonen_dict, tf_co
     return formatted_datetime, log_de, log_en
               
 template_keywords_en = [
-    r"Long.*term supplier's declaration for products having preferential origin status",
+    r"Long-term supplier's declaration for products having preferential origin status",
     r"Declaration",
     r"I, the undersigned, declare that the goods described.*which are regularly supplied to.*originate in.*and.*satisfy the rules of origin governing preferential trade with",
     r"I declare that",
@@ -373,7 +373,7 @@ template_keywords_en = [
 template_keywords_de = [
     r"Langzeit-Lieferantenerklärung für Waren mit Präferenzursprungseigenschaft",
     r"Erklärung",
-    r"Der Unterzeichner erklärt, dass die nachstehend bezeichneten Waren.*die regelmäßig an.*geliefert werden, Ursprungserzeugnisse.*sind und den Ursprungsregeln für den Präferenzverkehr mit.*entsprechen",
+    r"Der Unterzeichner erklärt, dass die nachstehend bezeichneten Waren.*die regelmäßig an.*geliefert werden, Ursprungserzeugnisse.*sind.*und den Ursprungsregeln für den Präferenzverkehr mit.*entsprechen",
     r"Er erklärt Folgendes",
     r"Diese Erklärung gilt für alle Sendungen dieser Waren im Zeitraum",
     r"Der Unterzeichner verpflichtet sich,.*umgehend zu unterrichten, wenn diese Erklärung ihre Geltung verliert",
@@ -404,7 +404,7 @@ def check_cumulation(word, text, target_char, phrase,missing_keyword):
 
 def check_keywords_in_document(document_text, template_keywords_en, template_keywords_de):
     missing_keyword = []
-    document_text_st = document_text.replace("\n"," ").replace("  "," ")
+    document_text_st = document_text.lower().replace("long term", "long-term").replace("\n"," ").replace("  "," ")
     if "declaration" in document_text.lower():
         check_keywords(template_keywords_en, document_text_st, missing_keyword)
         check_cumulation("cumulation", document_text, "c", "No cumulation applied",missing_keyword)
